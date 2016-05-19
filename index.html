@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LJ Video Editor</title>
+    <link type="text/css" rel="stylesheet" href="./bootstrap/css/bootstrap.min.css" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/3.0.0/pangu.min.js"></script>
+    <script src="./video.js" type="text/javascript"></script>
+    <script src="./sound.js" type="text/javascript"></script>
+    <script src="./time.js" type="text/javascript"></script>
+    <script src="./input.js" type="text/javascript"></script>
+    <script src="./display.js" type="text/javascript"></script>
+    <script src="./ui.js" type="text/javascript"></script>
+    <script src="./main.js" type="text/javascript"></script>
+    <script src="./srtInput.js" type="text/javascript"></script>
+    <script src="./save.js" type="text/javascript"></script>
+    <script src="./load.js" type="text/javascript"></script>
+    <style>
+        html, body
+        {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        video, source
+        {
+            margin: 0;
+            padding: 0;
+        }
+
+        #project
+        {
+            display: none;
+        }
+
+        #controllerTime
+        {
+            padding-left: 150px;
+            max-width: 100%;
+            overflow-x: scroll;
+        }
+
+        #controllerTimeStartBar
+        {
+            position: fixed;
+            z-index: 5;
+            top: 100%;
+            bottom: 0;
+            left: 149px;
+            width: 1px;
+            min-height: 100%;
+            background-color: #b92c28;
+        }
+
+        #controllerTime > div
+        {
+            border-radius: 10px;
+            position: relative;
+            height: 20px;
+        }
+
+        #controllerTimeTotal
+        {
+            height: 1px;
+        }
+
+        #controllerTimeTotalBar
+        {
+            text-align: center;
+            background-color: #ccc;
+        }
+
+        #displayBlocks
+        {
+            position: fixed;
+            z-index: 2;
+        }
+        
+        #timeDisplayPanel
+        {
+            position: fixed;
+            z-index: 3;
+            top: 0;
+            left: 0;
+            
+            opacity: 0.8;
+            background-color: #000;
+            color: #fff;
+        }
+
+        #inputPanel, #srtPanel, #soundPanel
+        {
+            position: fixed;
+            z-index: 3;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: auto;
+
+            padding: 15px;
+
+            background-color: #fff;
+        }
+
+        #soundBar
+        {
+            z-index: 2;
+            position: relative;
+            opacity: 0.8;
+        }
+
+        #soundBarTmp
+        {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<!-- 專案內容 -->
+<div id="project">
+
+</div>
+<!-- 開起影片介面 -->
+<div id="openPanel">
+    <p>
+        open video <input id="openUrl" type="file" />
+        <button onclick="ljUi.openVideo()"> open </button>
+        <button onclick="ljUi.openVideo(); ljLoad.load();"> open and load </button>
+        <button onclick="ljUi.getLastSave()">get last auto save</button>
+    </p>
+    <textarea id="loader">
+
+    </textarea>
+    - or -
+    <p>
+        <select id="localStorage">
+            <option>not working</option>
+        </select>
+    </p>
+</div>
+<!-- 區塊內容輸入 -->
+<div id="inputPanel">
+    <div class="form-group">
+        <h3 id="inputSelect"></h3>
+        <button onclick="ljUi.closeModifyPanel()" class="btn btn-default">x</button>
+        <button onclick="ljUi.updateBlocks()" class="btn btn-default">Submit</button>
+        <button onclick="ljUi.amButtonClick(this)" data-am="oneSecShack" class="btn btn-default amButton">1s Shack</button>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-xs-2">
+                <button onclick="ljUi.quickModifySetup(window.inputQuickCode.value)" class="btn btn-default">Quick Update</button>
+            </div>
+            <div class="col-xs-8">
+                <label for="inputQuickCode">Quick Code</label>
+                <input type="text" class="form-control" id="inputQuickCode">
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="inputContent">Content</label>
+        <div class="row">
+            <div class="col-xs-10">
+                <input type="text" class="form-control" id="inputContent" placeholder="content">
+            </div>
+            <div class="col-xs-2">
+                <button onclick="ljUi.getLastContent();" class="btn btn-default">get last content</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-6">
+            <div class="form-group">
+                <label for="inputSize">Size</label>
+                <input type="text" class="form-control" id="inputSize">
+            </div>
+            <div class="form-group">
+                <label for="inputColor">Color</label>
+                <input type="text" class="form-control" id="inputColor">
+            </div>
+            <div class="form-group">
+                <label for="inputStrokeColor">StrokeColor</label>
+                <input type="text" class="form-control" id="inputStrokeColor">
+            </div>
+        </div>
+        <div class="col-xs-6">
+            <div class="form-group">
+                <label for="inputFloat">Float</label>
+                <select class="form-control" id="inputFloat">
+                    <option value="left">left</option>
+                    <option value="right">right</option>
+                    <option value="center" selected>center</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="inputX">x</label>
+                <input type="text" class="form-control" id="inputX">
+            </div>
+            <div class="form-group">
+                <label for="inputY">y</label>
+                <input type="text" class="form-control" id="inputY">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xs-2">
+            <button onclick="ljUi.nowTimeToMissInput()" class="btn btn-default">now time to miss</button>
+        </div>
+        <div class="col-xs-10">
+            <div class="form-group">
+                <label for="inputContent">Miss word</label>
+                <input type="text" class="form-control" id="inputMissWord" placeholder="0.1:3,0.2:1,0.3:0">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 顯示 -->
+<div id="displayPanel">
+    <!-- 影片顯示 -->
+    <video id="displayVideo">
+        <source id="displayVideoUrl" src="" />
+    </video>
+    <!-- 後製效果顯示 -->
+    <canvas width="1920" height="1080" id="displayBlocks" onclick="ljUi.videoClick()">
+
+    </canvas>
+</div>
+
+<div id="timeDisplayPanel">
+</div>
+
+<!-- 選擇與控制 -->
+<div id="controllerPanel">
+    <button onclick="ljVideo.jumpTime(-0.1)" class="btn btn-default">＜</button>
+    <button onclick="ljVideo.jumpTime(0.1)" class="btn btn-default">＞</button>
+    <button onclick="ljUi.createBlocks()" class="btn btn-default"><span class="glyphicon glyphicon-font"></span>新增</button>
+    <button onclick="ljUi.openModifyPanel()" class="btn btn-default"><span class="glyphicon glyphicon-pencil"></span>修改</button>
+    <button onclick="ljUi.moveToNow()" class="btn btn-default"><span class="glyphicon glyphicon-upload"></span>移動</button>
+    <button onclick="ljUi.setStart()" class="btn btn-default"><span class="glyphicon glyphicon-upload"></span>設定開始</button>
+    <button onclick="ljUi.setEnd()" class="btn btn-default"><span class="glyphicon glyphicon-download"></span>設定結束</button>
+    <button onclick="ljUi.moveToLastEnd()" class="btn btn-default"><span class="glyphicon glyphicon-floppy-open"></span>移動製後</button>
+    <button onclick="ljUi.toDefault('m21')" class="btn btn-default">Lewis</button>
+    <button onclick="ljUi.toDefault('m12')" class="btn btn-default">Kevin</button>
+    <button onclick="ljUi.removeBlock()" class="btn btn-default"><span class="glyphicon glyphicon-floppy-remove"></span>刪除</button>
+    <button onclick="ljUi.selectLastBlock()" class="btn btn-default"><span class="glyphicon glyphicon-link"></span>選取上個</button>
+    <button onclick="ljUi.openSrtPanel()" class="btn btn-default"><span class="glyphicon glyphicon-book"></span>讀取 srt</button>
+    <button onclick="ljUi.openSoundPanel()" class="btn btn-default"><span class="glyphicon glyphicon-book"></span>讀取音效</button>
+    <button onclick="ljUi.soundPanelDown()" class="btn btn-default">音效下移</button>
+    <button onclick="ljUi.soundPanelUp()" class="btn btn-default">音效上移</button>
+    <button onclick="ljUi.downloadLastSave()" class="btn btn-default"><span class="glyphicon glyphicon-book"></span>存檔</button>
+
+    <div id="controllerTime" onscroll="ljUi.scrolledTime()">
+        <span id="controllerTimeStartBar"></span>
+        <span id="soundBarTmp"></span>
+        <span id="soundBar" style="top: 0;"></span>
+        <!-- 總影片時間 -->
+        <!-- width = window.innerWidth + video time -->
+        <div id="controllerTimeTotal"></div>
+        <div id="controllerTimeTotalBar">Total</div>
+        <!-- 其他區塊空置器 -->
+        <!-- <div id="time-1" start="1" end="2" style="top:1; left:2; color: #000;">content</div> -->
+    </div>
+</div>
+<!-- sound -->
+<div id="soundPanel">
+    <button onclick="ljUi.closeSoundPanel()" class="btn btn-default">x</button>
+    <input id="soundPanelFile" type="file" />
+    <button onclick="ljUi.openSound()"> open </button>
+</div>
+<!-- 輸入 -->
+<div id="srtPanel">
+    <h3>Srt input</h3>
+    <button onclick="ljUi.closeSrtPanel()" class="btn btn-default">x</button>
+    <button onclick="ljUi.updateProject()" class="btn btn-default">Submit</button>
+    <textarea id="srtInput"></textarea>
+</div>
+<script>
+    ljVideoEditor.init();
+</script>
+</body>
+</html>
